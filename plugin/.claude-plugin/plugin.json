@@ -1,0 +1,17 @@
+{
+  "name": "lidere-builder",
+  "version": "0.2.0",
+  "description": "Lidere Builder: monte painéis vivos sobre o ERP validando no navegador e publique no portal. Conecta o MCP lidere-builder-f3i do seu portal (login OAuth com o seu usuário).",
+  "author": { "name": "Lidere Sistemas", "email": "contato@lideresistemas.com.br" },
+  "homepage": "https://lideresistemas.com.br",
+  "license": "Proprietary",
+  "keywords": ["erp", "painel", "dashboard", "mcp", "lidere"],
+  "userConfig": {
+    "mcp_url": {
+      "type": "string",
+      "title": "URL do MCP do seu portal",
+      "description": "Endereço do lidere-builder-f3i no servidor da sua empresa, por exemplo https://mcp.suaempresa.com.br/mcp. Peça à TI ou à Lidere.",
+      "required": true
+    }
+  }
+}

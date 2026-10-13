@@ -1,0 +1,15 @@
+{
+  "formato": "focco3i-painel/1",
+  "id": "novo-painel",
+  "nome": "Novo painel",
+  "versao": "1.0.0",
+  "descricao": "",
+  "menu": { "grupo": "Painéis", "icone": "chart" },
+  "escopos": [],
+  "consultas": {
+    "principal": {
+      "arquivo": "consultas/principal.sql",
+      "max_linhas": 500
+    }
+  }
+}

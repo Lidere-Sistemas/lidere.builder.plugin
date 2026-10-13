@@ -1,0 +1,8 @@
+# LF em todo checkout, inclusive no Windows com core.autocrlf=true.
+# Os arquivos de plataforma do painel (painel-runtime.js, portal.css) sao conferidos
+# por hash no portal: CRLF muda o hash e o pacote e recusado.
+* text=auto eol=lf
+*.woff2 binary
+*.png binary
+*.ico binary
+*.zip binary

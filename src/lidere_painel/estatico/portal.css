@@ -1,0 +1,190 @@
+/*
+ * focco3i-painel/1 · padrao visual do portal (vai DENTRO do zip).
+ *
+ * Tokens do tema MUI do portal padrao Lidere (template.web):
+ * Inter, escala cinza slate, primaria = cor da empresa (main_color), cards com
+ * raio 10 e sombra suave, botoes e campos com raio 8, texto base 14px, tema claro.
+ *
+ * A cor primaria vem do host em tempo de execucao (painel-runtime.js aplica
+ * --pf-primaria a partir do contexto). O valor abaixo e so o fallback do portal.
+ *
+ * Use as classes .pf-* em vez de estilo proprio: o painel fica com cara de tela
+ * do portal e muda junto quando o portal mudar.
+ */
+
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("inter-latin.woff2") format("woff2");
+}
+
+:root {
+  --pf-primaria: #674596;
+  --pf-primaria-suave: color-mix(in srgb, var(--pf-primaria) 12%, transparent);
+  --pf-primaria-escura: color-mix(in srgb, var(--pf-primaria) 90%, #000);
+
+  --pf-fundo: #f8fafc;        /* background.default (grey 50) */
+  --pf-superficie: #ffffff;   /* background.paper (grey 0) */
+  --pf-cinza-100: #f1f5f9;
+  --pf-divisor: #e2e8f0;      /* divider (grey 200) */
+  --pf-cinza-300: #cbd5e1;
+  --pf-cinza-400: #94a3b8;
+  --pf-texto: #0f172a;        /* text.primary (grey 900) */
+  --pf-texto-2: #334155;      /* text.secondary (grey 700) */
+  --pf-texto-3: #64748b;      /* text.disabled (grey 500) */
+
+  --pf-sucesso: #52c41a;      /* success.main (ant green 5) */
+  --pf-sucesso-texto: #237804;
+  --pf-erro: #ff4d4f;         /* error.main (ant red 4) */
+  --pf-erro-texto: #cf1322;
+  --pf-alerta: #faad14;       /* warning.main (ant gold 5) */
+  --pf-alerta-texto: #ad6800;
+  --pf-info: #13c2c2;         /* info.main (ant cyan 5) */
+
+  /* serie de graficos: primaria primeiro, depois cores do tema */
+  --pf-serie-1: var(--pf-primaria);
+  --pf-serie-2: #13c2c2;
+  --pf-serie-3: #faad14;
+  --pf-serie-4: #52c41a;
+  --pf-serie-5: #94a3b8;
+
+  --pf-raio-card: 10px;
+  --pf-raio-campo: 8px;
+  --pf-sombra-card: 0 10px 24px rgba(15, 23, 42, 0.08);
+  --pf-sombra-botao: 0 10px 18px rgba(15, 23, 42, 0.12);
+
+  --pf-fonte: "Inter", "Public Sans", "Roboto", system-ui, sans-serif;
+  --pf-fonte-numero: "Inter", system-ui, sans-serif;
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; }
+body {
+  background: var(--pf-fundo);
+  color: var(--pf-texto);
+  font-family: var(--pf-fonte);
+  font-size: 0.875rem;        /* body1 */
+  line-height: 1.57;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* --- estrutura ------------------------------------------------------------------ */
+.pf-pagina { padding: 24px; display: grid; gap: 20px; max-width: 1536px; margin: 0 auto; }
+.pf-cabecalho { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 12px 24px; }
+.pf-titulo { font-size: 1.5rem; font-weight: 600; line-height: 1.33; margin: 0; }          /* h3 */
+.pf-subtitulo { color: var(--pf-texto-2); margin: 4px 0 0; max-width: 80ch; }
+.pf-acoes { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.pf-grade { display: grid; gap: 20px; grid-template-columns: repeat(12, minmax(0, 1fr)); }
+.pf-col-12 { grid-column: span 12; } .pf-col-8 { grid-column: span 8; } .pf-col-6 { grid-column: span 6; }
+.pf-col-4 { grid-column: span 4; } .pf-col-3 { grid-column: span 3; }
+
+/* --- card ------------------------------------------------------------------------ */
+.pf-card {
+  background: var(--pf-superficie);
+  border: 1px solid var(--pf-divisor);
+  border-radius: var(--pf-raio-card);
+  box-shadow: var(--pf-sombra-card);
+  padding: 20px;
+  min-width: 0;
+  display: grid;
+  gap: 14px;
+  align-content: start;
+}
+.pf-card-cabecalho { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px 16px; }
+.pf-card-titulo { font-size: 1rem; font-weight: 600; line-height: 1.5; margin: 0; }        /* h5 */
+.pf-legenda { font-size: 0.75rem; color: var(--pf-texto-3); margin: 0; line-height: 1.66; } /* caption */
+
+/* --- indicadores ----------------------------------------------------------------- */
+.pf-kpis { display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.pf-kpi {
+  background: var(--pf-superficie); border: 1px solid var(--pf-divisor); border-radius: var(--pf-raio-card);
+  box-shadow: var(--pf-sombra-card); padding: 18px 20px; display: grid; gap: 4px; align-content: start;
+}
+.pf-kpi-rotulo { font-size: 0.75rem; font-weight: 500; color: var(--pf-texto-2); }
+.pf-kpi-valor { font-family: var(--pf-fonte-numero); font-size: 1.5rem; font-weight: 600; line-height: 1.33; font-variant-numeric: tabular-nums; }
+.pf-kpi-nota { font-size: 0.75rem; color: var(--pf-texto-3); }
+
+/* --- controles ------------------------------------------------------------------- */
+.pf-rotulo { font-size: 0.75rem; font-weight: 500; color: var(--pf-texto-2); }
+.pf-btn, .pf-campo {
+  font: inherit; font-size: 0.875rem; color: var(--pf-texto);
+  border-radius: var(--pf-raio-campo); border: 1px solid var(--pf-divisor); background: var(--pf-superficie);
+  min-height: 36px; padding: 6px 14px;
+  transition: box-shadow .2s ease, border-color .2s ease, background .2s ease;
+}
+.pf-btn { font-weight: 600; cursor: pointer; }
+.pf-btn:hover, .pf-campo:hover { border-color: var(--pf-cinza-300); }
+.pf-btn:disabled { opacity: .55; cursor: default; }
+.pf-btn-primario { background: var(--pf-primaria); border-color: var(--pf-primaria); color: #fff; box-shadow: var(--pf-sombra-botao); }
+.pf-btn-primario:hover { background: var(--pf-primaria-escura); border-color: var(--pf-primaria-escura); }
+.pf-btn:focus-visible, .pf-campo:focus-visible, .pf-campo:focus {
+  outline: none; border-color: var(--pf-primaria); box-shadow: 0 0 0 4px var(--pf-primaria-suave);
+}
+select.pf-campo { padding-right: 32px; }
+
+/* --- chips e estados ------------------------------------------------------------- */
+.pf-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.pf-chip { font-size: 0.75rem; line-height: 1.66; padding: 2px 10px; border-radius: 16px; background: var(--pf-cinza-100); color: var(--pf-texto-2); }
+.pf-chip b { color: var(--pf-texto); font-weight: 600; }
+.pf-chip-alerta { background: #fffbe6; color: var(--pf-alerta-texto); }
+.pf-chip-erro { background: #fff1f0; color: var(--pf-erro-texto); }
+.pf-chip-sucesso { background: #f6ffed; color: var(--pf-sucesso-texto); }
+.pf-estado { padding: 40px 20px; text-align: center; color: var(--pf-texto-2); }
+.pf-estado-erro { color: var(--pf-erro-texto); white-space: pre-wrap; text-align: left; }
+.pf-positivo { color: var(--pf-sucesso-texto); }
+.pf-negativo { color: var(--pf-erro-texto); }
+
+/* --- tabela (igual a TableCell do portal) ---------------------------------------- */
+.pf-tabela-wrap { overflow-x: auto; }
+.pf-tabela { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+.pf-tabela th, .pf-tabela td { padding: 10px 12px; border-bottom: 1px solid var(--pf-divisor); white-space: nowrap; text-align: left; }
+.pf-tabela th { font-size: 0.75rem; font-weight: 600; color: var(--pf-texto-2); text-transform: uppercase; letter-spacing: .02em; background: var(--pf-fundo); }
+.pf-tabela td.pf-num, .pf-tabela th.pf-num { text-align: right; font-variant-numeric: tabular-nums; }
+.pf-tabela tbody tr:hover td { background: var(--pf-fundo); }
+.pf-tabela tfoot td { font-weight: 600; border-bottom: 0; border-top: 1px solid var(--pf-cinza-300); }
+
+/* --- grafico (SVG) --------------------------------------------------------------- */
+.pf-grafico { position: relative; width: 100%; }
+.pf-grafico svg { display: block; width: 100%; height: auto; overflow: visible; }
+.pf-grafico text { font-family: var(--pf-fonte); fill: var(--pf-texto-3); font-size: 11px; }
+.pf-grafico .pf-grade-linha { stroke: var(--pf-cinza-100); }
+.pf-grafico .pf-eixo { stroke: var(--pf-cinza-300); }
+.pf-dica {
+  position: absolute; pointer-events: none; z-index: 2; min-width: 210px;
+  background: var(--pf-superficie); border: 1px solid var(--pf-divisor); border-radius: var(--pf-raio-campo);
+  padding: 10px 12px; font-size: 0.75rem; box-shadow: var(--pf-sombra-card);
+}
+
+/* --- linha clicavel, drill e detalhe ---------------------------------------------- */
+.pf-tabela tr.pf-clicavel { cursor: pointer; }
+.pf-tabela tr.pf-clicavel:focus-visible td { outline: 2px solid var(--pf-primaria); outline-offset: -2px; }
+.pf-tabela tr.pf-selecionada td { background: var(--pf-primaria-suave); }
+.pf-tabela td.pf-quebra, .pf-tabela tr.pf-linha-detalhe > td { white-space: normal; }
+.pf-tabela tr.pf-linha-detalhe > td { background: var(--pf-fundo); padding: 16px; }
+.pf-tabela tr.pf-linha-detalhe:hover > td { background: var(--pf-fundo); }
+.pf-detalhe {
+  background: var(--pf-superficie); border: 1px solid var(--pf-divisor); border-radius: var(--pf-raio-card);
+  padding: 16px; display: grid; gap: 14px; white-space: normal;
+}
+.pf-detalhe .pf-tabela td, .pf-detalhe .pf-tabela th { padding: 6px 10px; }
+.pf-campos { display: grid; gap: 10px 20px; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); margin: 0; }
+.pf-campos dt { font-size: .75rem; font-weight: 500; color: var(--pf-texto-3); }
+.pf-campos dd { margin: 2px 0 0; color: var(--pf-texto); overflow-wrap: anywhere; }
+
+/* --- modal (para detalhe grande; o drill em linha costuma bastar) ------------------- */
+.pf-modal-fundo { position: fixed; inset: 0; background: rgba(15, 23, 42, .45); display: grid; place-items: start center; padding: 40px 16px; z-index: 50; overflow-y: auto; }
+.pf-modal { background: var(--pf-superficie); border-radius: var(--pf-raio-card); box-shadow: 0 24px 48px rgba(15, 23, 42, .25); width: min(960px, 100%); display: grid; gap: 16px; padding: 20px; }
+.pf-modal-cabecalho { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+
+/* --- formulario de filtros ---------------------------------------------------------- */
+.pf-filtros { display: grid; gap: 12px 16px; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); align-items: end; }
+.pf-filtro { display: grid; gap: 4px; }
+
+code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: .9em; background: var(--pf-cinza-100); padding: 1px 4px; border-radius: 4px; }
+
+@media (max-width: 1023px) { .pf-col-8, .pf-col-6, .pf-col-4, .pf-col-3 { grid-column: span 12; } }
+@media (max-width: 767px) { .pf-pagina { padding: 16px; gap: 16px; } .pf-titulo { font-size: 1.25rem; } }

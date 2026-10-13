@@ -1,0 +1,17 @@
+{
+  "name": "lidere",
+  "owner": {
+    "name": "Lidere Sistemas",
+    "email": "contato@lideresistemas.com.br"
+  },
+  "metadata": {
+    "description": "Plugins da Lidere Sistemas para trabalhar com o ERP da sua empresa no Claude."
+  },
+  "plugins": [
+    {
+      "name": "lidere-builder",
+      "source": "./plugin",
+      "description": "Construa painéis vivos sobre o ERP com o Claude e publique no portal, com governança (escopos, só leitura, auditoria)."
+    }
+  ]
+}
