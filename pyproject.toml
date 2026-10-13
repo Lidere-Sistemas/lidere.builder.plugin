@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "lidere-builder"
-version = "0.3.0"
+version = "0.3.1"
 description = "Lidere Builder: CLI de painel vivo e plugin do Claude Code para construir painéis sobre o ERP pelo portal."
 readme = "README.md"
 requires-python = ">=3.12"

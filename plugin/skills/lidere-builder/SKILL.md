@@ -7,7 +7,7 @@ description: Use para construir com o usuário um PAINEL VIVO (dashboard, tela d
 
 ## Passo 0: CLI na versão certa, depois o guia canônico
 
-**Antes de tudo**, rode `lidere-painel --version`. Tem que mostrar `lidere-painel 0.3.0` (a versão deste plugin). Se mostrar outra versão, se o comando não existir ou se o aviso do início da sessão disser que a CLI está desatualizada: rode a skill `instalar` **antes** de criar qualquer arquivo. Versão antiga gera painel fora do padrão e o portal recusa o pacote.
+**Antes de tudo**, rode `lidere-painel --version`. Tem que mostrar `lidere-painel 0.3.1` (a versão deste plugin). Se mostrar outra versão, se o comando não existir ou se o aviso do início da sessão disser que a CLI está desatualizada: rode a skill `instalar` **antes** de criar qualquer arquivo. Versão antiga gera painel fora do padrão e o portal recusa o pacote.
 
 
 O guia completo mora no produto, para chegar igual ao cliente. **Leia agora**, antes de escrever qualquer arquivo:

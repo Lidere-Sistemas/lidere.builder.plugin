@@ -422,8 +422,8 @@ def _montar(
 
     consultas: dict[str, Consulta] = {}
     brutas = manifesto.get("consultas")
-    if brutas is None and manifesto.get("entidades") is not None:
-        brutas = {}  # modulo so de cadastro: consultas sao opcionais (as entidades o portal valida)
+    if not brutas and manifesto.get("entidades") is not None:
+        brutas = {}  # programa so de cadastro: consultas ausentes ou vazias (o portal valida as entidades)
     elif not isinstance(brutas, dict) or not brutas:
         problemas.append("consultas: declare ao menos uma consulta")
         brutas = {}

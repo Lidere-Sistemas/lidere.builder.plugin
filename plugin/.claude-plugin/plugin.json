@@ -1,6 +1,6 @@
 {
   "name": "lidere-builder",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Lidere Builder: monte painéis vivos sobre o ERP validando no navegador e publique no portal. Conecta o MCP lidere-builder-f3i do seu portal (login OAuth com o seu usuário).",
   "author": { "name": "Lidere Sistemas", "email": "contato@lideresistemas.com.br" },
   "homepage": "https://lideresistemas.com.br",
