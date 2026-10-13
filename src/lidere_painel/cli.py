@@ -20,9 +20,10 @@ import sys
 import webbrowser
 from pathlib import Path
 
+from lidere_painel import __version__
 from lidere_painel.config import Config, salvar
 from lidere_painel.erros import Focco3iMcpError
-from lidere_painel.pacote import Painel, PacoteInvalido, carregar_pasta, converter_parametros, empacotar
+from lidere_painel.pacote import Painel, PacoteInvalido, carregar_pasta, converter_parametros, empacotar, versao_tupla
 from lidere_painel.portal import PortalCliente, PortalExecutor
 
 NIVEL_CONSULTA = 2
@@ -194,8 +195,30 @@ def _mostrar_arquivo(arquivo: Path) -> None:
         webbrowser.open(arquivo.parent.as_uri())
 
 
+def _aviso_versao(esperada: str | None) -> str:
+    """Texto que o hook de inicio de sessao injeta no contexto do Claude. Sempre sai com codigo 0."""
+    if not esperada or esperada == __version__:
+        return f"Lidere Builder: CLI lidere-painel {__version__} pronta."
+    instalar = f"uv tool install --force git+https://github.com/Lidere-Sistemas/lidere.builder.plugin@v{esperada}"
+    try:
+        cli_antiga = versao_tupla(__version__) < versao_tupla(esperada)
+    except ValueError:
+        cli_antiga = True
+    if cli_antiga:
+        return (
+            f"ATENCAO Lidere Builder: a CLI lidere-painel instalada e a {__version__}, mas o plugin e o {esperada}. "
+            f"Antes de qualquer painel, atualize a CLI com `{instalar}` (o uv fica na pasta de programas do usuario; "
+            "veja a skill instalar) e confira com `lidere-painel --version`. Nao monte painel com a CLI antiga."
+        )
+    return (
+        f"ATENCAO Lidere Builder: a CLI lidere-painel {__version__} e mais nova que o plugin {esperada}. "
+        "Peca ao usuario para atualizar o plugin (no terminal: `claude plugin update lidere-builder@lidere`) e reabrir o app."
+    )
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="lidere-painel", description="Paineis vivos sobre o ERP, publicados no portal.")
+    parser.add_argument("--version", action="version", version=f"lidere-painel {__version__}")
     sub = parser.add_subparsers(dest="comando", required=True)
     p_novo = sub.add_parser("novo", help="cria um painel a partir do modelo")
     p_novo.add_argument("pasta", type=Path)
@@ -221,7 +244,13 @@ def main(argv: list[str] | None = None) -> int:
     p_conf.add_argument("--url", help="URL da API do portal (ex.: https://portal.cliente.com.br/api)")
     p_conf.add_argument("--cor", help="cor primaria da empresa para a pre-visualizacao (main_color)")
     sub.add_parser("status", help="mostra com quem e em que escopos a CLI esta conectada")
+    p_ver = sub.add_parser("versao", help="confere se a CLI tem a versao do plugin (usado pelo hook de inicio de sessao)")
+    p_ver.add_argument("--esperada", help="versao do plugin instalado (ex.: 0.2.1)")
     args = parser.parse_args(argv)
+
+    if args.comando == "versao":
+        print(_aviso_versao(args.esperada))
+        return 0
 
     if args.comando == "configurar":
         import getpass
@@ -320,7 +349,7 @@ def main(argv: list[str] | None = None) -> int:
     if painel is None:
         print("Nada foi empacotado.", file=sys.stderr)
         return 1
-    zip_path = empacotar(painel, getattr(args, "destino", None) or args.pasta.parent / "dist")
+    zip_path = empacotar(painel, getattr(args, "destino", None) or args.pasta.parent / "dist", versao_cli=__version__)
     print(f"Pacote gerado: {zip_path}")
     if getattr(args, "mostrar", False):
         _mostrar_arquivo(zip_path)

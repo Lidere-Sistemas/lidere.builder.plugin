@@ -12,6 +12,8 @@ from typing import Any, Callable
 
 import httpx
 
+from lidere_painel import __version__
+
 from lidere_painel.config import Config
 from lidere_painel.erros import EntradaInvalida, Focco3iMcpError, PonteIndisponivel, SqlBloqueado
 
@@ -21,6 +23,9 @@ __all__ = ["PortalCliente", "ForaDoEscopo", "PortalExecutor"]
 class ForaDoEscopo(Focco3iMcpError):
     """O portal recusou: tabela fora dos escopos do usuário. Nada foi ao banco."""
 
+
+CABECALHO_VERSAO = "X-Lidere-Painel-Versao"
+"""Versao da CLI em toda chamada: portal e MCP recusam CLI abaixo da minima (HTTP 426)."""
 
 class PortalCliente:
     """`token`: o token fixo do .env (MCP local) ou uma função que devolve o token do usuário
@@ -37,7 +42,7 @@ class PortalCliente:
         try:
             async with httpx.AsyncClient(timeout=self._timeout) as cliente:
                 token = self._token() if callable(self._token) else self._token
-                cabecalho = {"Authorization": f"Bearer {token}"}
+                cabecalho = {"Authorization": f"Bearer {token}", CABECALHO_VERSAO: __version__}
                 if arquivos:
                     resposta = await cliente.request(metodo, self._base + rota, files=arquivos, headers=cabecalho)
                 else:
@@ -56,6 +61,8 @@ class PortalCliente:
             raise EntradaInvalida(dados.get("detail", "Pedido inválido."))
         if resposta.status_code == 422:
             raise SqlBloqueado(dados.get("detail", "Recusado pela governança."))
+        if resposta.status_code == 426:
+            raise Focco3iMcpError(dados.get("detail") or "Lidere Builder desatualizado. Peca ao Claude: \"atualiza o Lidere Builder\".")
         if resposta.status_code >= 400:
             raise Focco3iMcpError(f"O portal respondeu {resposta.status_code}: {dados.get('detail', '')}")
         return dados

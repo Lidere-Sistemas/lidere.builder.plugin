@@ -105,6 +105,9 @@ _RE_ID_CONSULTA = re.compile(r"^[a-z][a-z0-9_]{0,40}$")
 _RE_VERSAO = re.compile(r"^\d+\.\d+\.\d+$")
 _RE_ESCOPO = re.compile(r"^[A-Za-z][A-Za-z0-9_]{1,39}$")
 _ESTATICO = Path(__file__).with_name("estatico")
+GERADO_POR = "GERADO_POR.txt"
+"""Carimbo que o `empacotar` grava no zip: `lidere-painel <versao>`. O host recusa zip sem ele ou abaixo da minima."""
+_RE_GERADO_POR = re.compile(r"^lidere-painel (\d+\.\d+\.\d+)\s*$")
 ARQUIVOS_DA_PLATAFORMA = ("painel-runtime.js", "portal.css", "inter-latin.woff2")
 """Arquivos que vem do focco3i, nao do autor do painel: precisam ser identicos a uma versao oficial."""
 
@@ -251,9 +254,35 @@ def carregar_pasta(
     return _montar(arquivos, owners, funcoes_extras, problemas, governanca)
 
 
+def versao_tupla(versao: str) -> tuple[int, int, int]:
+    """'0.2.1' -> (0, 2, 1). Levanta ValueError se nao for semver simples."""
+    if not _RE_VERSAO.match(versao):
+        raise ValueError(f"versao invalida: {versao}")
+    a, b, c = versao.split(".")
+    return int(a), int(b), int(c)
+
+
+def conferir_gerado_por(arquivos: dict[str, bytes], cli_minima: str) -> None:
+    """Recusa pacote que nao saiu da CLI oficial a partir de `cli_minima` (ex.: CLI antiga que ainda gerava HTML solto)."""
+    bruto = arquivos.get(GERADO_POR, b"").decode("utf-8", "replace").strip()
+    achado = _RE_GERADO_POR.match(bruto)
+    if achado and versao_tupla(achado.group(1)) >= versao_tupla(cli_minima):
+        return
+    origem = f"versao {achado.group(1)}" if achado else "versao antiga ou desconhecida"
+    raise PacoteInvalido([
+        f"Este pacote foi gerado por uma {origem} do Lidere Builder; o portal aceita a partir da {cli_minima}. "
+        "Peca ao Claude: \"atualiza o Lidere Builder\" e empacote o painel de novo."
+    ])
+
+
 def carregar_zip(
-    conteudo: bytes, owners: tuple[str, ...], funcoes_extras: tuple[str, ...] = (), governanca: bool = True
+    conteudo: bytes,
+    owners: tuple[str, ...],
+    funcoes_extras: tuple[str, ...] = (),
+    governanca: bool = True,
+    cli_minima: str | None = None,
 ) -> Painel:
+    """`cli_minima`: o host passa a versao minima da CLI; sem ela (None) o carimbo nao e conferido."""
     problemas: list[str] = []
     if len(conteudo) > LIMITE_ZIP_BYTES:
         raise PacoteInvalido([f"zip maior que {LIMITE_ZIP_BYTES // 1024 // 1024} MB"])
@@ -276,6 +305,8 @@ def carregar_zip(
         seguro = _caminho_seguro(info.filename, problemas)
         if seguro:
             arquivos[seguro] = pacote.read(info)
+    if cli_minima is not None:
+        conferir_gerado_por(arquivos, cli_minima)
     return _montar(arquivos, owners, funcoes_extras, problemas, governanca)
 
 
@@ -521,13 +552,17 @@ def converter_parametros(consulta: Consulta, recebidos: dict[str, Any] | None) -
 # --- empacotamento -----------------------------------------------------------------------
 
 
-def empacotar(painel: Painel, destino: Path) -> Path:
-    """Grava `<id>-<versao>.zip` com um MANIFEST.sha256 para o host conferir integridade."""
+def empacotar(painel: Painel, destino: Path, versao_cli: str | None = None) -> Path:
+    """Grava `<id>-<versao>.zip` com um MANIFEST.sha256 para o host conferir integridade
+    e o carimbo `GERADO_POR.txt` com a versao da CLI que a CLI passa (o host recusa CLI abaixo da minima)."""
     destino.mkdir(parents=True, exist_ok=True)
     caminho = destino / f"{painel.id}-{painel.versao}.zip"
-    hashes = "\n".join(f"{hashlib.sha256(c).hexdigest()}  {n}" for n, c in sorted(painel.arquivos.items()))
+    arquivos = {n: c for n, c in painel.arquivos.items() if n not in (GERADO_POR, "MANIFEST.sha256.txt")}
+    if versao_cli:
+        arquivos[GERADO_POR] = f"lidere-painel {versao_cli}\n".encode()
+    hashes = "\n".join(f"{hashlib.sha256(c).hexdigest()}  {n}" for n, c in sorted(arquivos.items()))
     with zipfile.ZipFile(caminho, "w", zipfile.ZIP_DEFLATED) as pacote:
-        for nome, conteudo in sorted(painel.arquivos.items()):
+        for nome, conteudo in sorted(arquivos.items()):
             pacote.writestr(nome, conteudo)
         pacote.writestr("MANIFEST.sha256.txt", hashes + "\n")
     return caminho

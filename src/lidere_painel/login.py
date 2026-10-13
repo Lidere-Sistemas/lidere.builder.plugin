@@ -24,8 +24,10 @@ import httpx
 from authlib.common.security import generate_token
 from authlib.integrations.httpx_client import OAuth2Client
 
+from lidere_painel import __version__
 from lidere_painel.config import url_aceitavel
 from lidere_painel.erros import Focco3iMcpError
+from lidere_painel.portal import CABECALHO_VERSAO
 
 __all__ = ["entrar", "ErroDeLogin", "CLIENTE", "portal_url_aceitavel"]
 
@@ -161,10 +163,13 @@ def entrar(
                 meta["token_endpoint"], authorization_response=recebida, code_verifier=verificador, resource=recurso
             )
             resgate = http.post(
-                f"{base}/oauth/token-portal", headers={"Authorization": f"Bearer {token['access_token']}"}
+                f"{base}/oauth/token-portal",
+                headers={"Authorization": f"Bearer {token['access_token']}", CABECALHO_VERSAO: __version__},
             )
         except Exception as erro:  # authlib levanta OAuthError e httpx.HTTPError
             raise ErroDeLogin(f"Não consegui concluir o login: {erro}") from erro
+        if resgate.status_code == 426:
+            raise ErroDeLogin("Esta versao do Lidere Builder e antiga para este portal. Peca ao Claude: \"atualiza o Lidere Builder\".")
         if resgate.status_code == 503:
             raise ErroDeLogin("O login pela CLI ainda não está ligado neste portal. Fale com a Lidere.")
         if resgate.status_code != 200:

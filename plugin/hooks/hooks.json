@@ -1,0 +1,12 @@
+{
+  "description": "Confere no inicio da sessao se a CLI lidere-painel tem a versao deste plugin; se nao, avisa o Claude para atualizar antes de montar painel.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          { "type": "command", "command": "lidere-painel versao --esperada 0.2.1", "timeout": 30 }
+        ]
+      }
+    ]
+  }
+}

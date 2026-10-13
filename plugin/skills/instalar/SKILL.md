@@ -19,7 +19,7 @@ Quem usa é gente de negócio, não de TI. **Você faz tudo**; o usuário só ap
 
 1. **Programa de apoio (uv).** Se faltar, instale com o comando da tabela. Ele não pede admin. Nesta sessão o app ainda não enxerga o programa novo pelo nome: chame **pelo caminho completo** da pasta dos programas até o fim da instalação.
 2. **CLI do Lidere Builder** (já traz o Node junto, não instale Node à parte; não pede login):
-   `<pasta dos programas>/uv tool install --force git+https://github.com/Lidere-Sistemas/lidere.builder.plugin@v0.2.0`
+   `<pasta dos programas>/uv tool install --force git+https://github.com/Lidere-Sistemas/lidere.builder.plugin@v0.2.1`
    Use exatamente essa versão (é a deste plugin); não instale da `main`.
    Se der erro de rede ou dizer que falta o `git`, peça ao usuário para instalar o Git (git-scm.com, opções padrão) e tente de novo.
 3. **Liberar os comandos do dia a dia** (para não pedir aprovação a cada passo). Explique em uma frase e peça o ok. Depois acrescente, sem apagar nada do que já existe, em `~/.claude/settings.json` (no Windows, `%USERPROFILE%\.claude\settings.json`), dentro de `permissions.allow`, estas regras para cada comando `status`, `novo`, `servir`, `validar`, `empacotar` e `atualizar`:
