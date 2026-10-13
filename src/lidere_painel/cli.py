@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import json
 import shutil
 import subprocess
 import sys
@@ -175,12 +176,34 @@ def _validar(pasta: Path, config: Config, sem_banco: bool) -> Painel | None:
     if problemas:
         print("\n".join(problemas), file=sys.stderr)
         return None
-    print("Rodando cada consulta na base, com os parametros padrao:")
-    problemas = asyncio.run(_executar_consultas(painel, config))
-    if problemas:
-        print("\n".join(problemas), file=sys.stderr)
+    if painel.consultas:
+        print("Rodando cada consulta na base, com os parametros padrao:")
+        problemas = asyncio.run(_executar_consultas(painel, config))
+        if problemas:
+            print("\n".join(problemas), file=sys.stderr)
+            return None
+    manifesto = json.loads(painel.arquivos["painel.json"].decode("utf-8"))
+    if manifesto.get("entidades") is not None and not _conferir_modulo(manifesto, config):
         return None
     return painel
+
+
+def _conferir_modulo(manifesto: dict, config: Config) -> bool:
+    """Entidades: quem confere e o portal (as regras ficam no servidor). Mostra o que sera criado no banco."""
+    try:
+        r = asyncio.run(PortalCliente(config).modulo_validar(manifesto))
+    except Focco3iMcpError as erro:
+        print(f"Modulo com dados recusado: {erro}", file=sys.stderr)
+        return False
+    plano = r.get("plano") or {}
+    if plano.get("problemas"):
+        print("Modulo com dados: o banco nao aceita estas mudancas:\n  " + "\n  ".join(plano["problemas"]), file=sys.stderr)
+        return False
+    entidades = ", ".join(r.get("modulo", {}).get("entidades", {}))
+    comandos = plano.get("comandos") or []
+    print(f"Modulo {r.get('modulo', {}).get('sigla')} ok ({entidades}) no owner {r.get('owner')}: "
+          + (f"{len(comandos)} comando(s) de estrutura pendente(s), aplicados no servir/publicar." if comandos else "estrutura em dia."))
+    return True
 
 
 def _mostrar_arquivo(arquivo: Path) -> None:
@@ -244,9 +267,19 @@ def main(argv: list[str] | None = None) -> int:
     p_conf.add_argument("--url", help="URL da API do portal (ex.: https://portal.cliente.com.br/api)")
     p_conf.add_argument("--cor", help="cor primaria da empresa para a pre-visualizacao (main_color)")
     sub.add_parser("status", help="mostra com quem e em que escopos a CLI esta conectada")
+    p_parar = sub.add_parser("parar", help="encerra a pre-visualizacao (fim do teste, antes de empacotar/publicar)")
+    p_parar.add_argument("--porta", type=int, default=None, help="so a desta porta (padrao: todas)")
     p_ver = sub.add_parser("versao", help="confere se a CLI tem a versao do plugin (usado pelo hook de inicio de sessao)")
     p_ver.add_argument("--esperada", help="versao do plugin instalado (ex.: 0.2.1)")
     args = parser.parse_args(argv)
+
+    if args.comando == "parar":
+        from lidere_painel import previa
+
+        portas = [args.porta] if args.porta else [int(p) for p in previa.listar()]
+        encerradas = [f"{p} ({pasta})" for p in portas if (pasta := previa.parar(p))]
+        print("Pre-visualizacao encerrada: " + ", ".join(encerradas) if encerradas else "Nenhuma pre-visualizacao no ar.")
+        return 0
 
     if args.comando == "versao":
         print(_aviso_versao(args.esperada))
@@ -321,8 +354,16 @@ def main(argv: list[str] | None = None) -> int:
     if args.comando == "servir":
         import uvicorn
 
+        from lidere_painel import previa
         from lidere_painel.servidor_dev import criar_app
 
+        # Uma pre-visualizacao por porta: a nova derruba a anterior (so as do Lidere Builder).
+        livre, aviso = previa.liberar(args.porta)
+        if not livre:
+            print(aviso, file=sys.stderr)
+            return 1
+        if aviso:
+            print(aviso)
         print("Compilando o painel...")
         try:
             construir(args.pasta)
@@ -330,6 +371,7 @@ def main(argv: list[str] | None = None) -> int:
         except ErroDeBuild as erro:
             print(str(erro), file=sys.stderr)
             return 1
+        previa.registrar(args.porta, args.pasta.resolve(), vigia.pid if vigia is not None else None)
         print("Recompilando a cada alteracao em src/ (vite build --watch).")
         url = f"http://127.0.0.1:{args.porta}/"
         print(f"Pre-visualizacao em {url} (Ctrl+C para sair). Base: {config.ambiente}.")
@@ -340,6 +382,7 @@ def main(argv: list[str] | None = None) -> int:
         finally:
             if vigia is not None:
                 encerrar_vigia(vigia)
+            previa.esquecer(args.porta)
         return 0
 
     if args.comando == "validar":
@@ -360,9 +403,15 @@ def main(argv: list[str] | None = None) -> int:
             print(f"O portal recusou a publicacao: {erro}", file=sys.stderr)
             return 1
         print(f"Publicado no portal: {r['nome']} v{r['versao']} ({r['status']}).")
+        if r.get("menu"):
+            print(f"No menu: {r['menu']} › {r['nome']}")
         print(f"Abra em: {r['url']}")
         return 0
-    print("Suba esse arquivo em Paineis > Cadastrar no portal.")
+    programa = json.loads(painel.arquivos["painel.json"].decode("utf-8")).get("entidades") is not None
+    if programa:
+        print("E um PROGRAMA (tem entidades): suba esse arquivo em Programas Especiais > Cadastro de Programas no portal.")
+    else:
+        print("Suba esse arquivo em Paineis > Cadastro de Paineis no portal.")
     return 0
 
 

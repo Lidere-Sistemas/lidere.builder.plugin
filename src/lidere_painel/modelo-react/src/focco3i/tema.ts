@@ -21,7 +21,8 @@ export const criarTema = (corPrimaria = '#674596') => {
       info: { main: '#13c2c2' },
       text: { primary: cinza[900], secondary: cinza[700], disabled: cinza[500] },
       divider: cinza[200],
-      background: { default: cinza[50], paper: cinza[0] },
+      // Fundo transparente: o painel fica sobre o fundo da página do portal, sem "caixa" do iframe.
+      background: { default: 'transparent', paper: cinza[0] },
       grey: cinza as never
     },
     shape: { borderRadius: 5 },

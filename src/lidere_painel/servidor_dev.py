@@ -146,6 +146,12 @@ footer button:hover{{background:var(--line)}}footer button b{{color:var(--fg)}}
         method: "POST", headers: {{ "Content-Type": "application/json", "X-Painel-Dev": SEGREDO }}, body: JSON.stringify({{ parametros: parametros }})
       }}).then(function (r) {{ return r.json().then(function (j) {{ if (!r.ok) throw new Error(j.erro); return j; }}); }});
     }},
+    entidade: function (entidade, operacao, entrada) {{
+      return fetch("/_api/entidade", {{
+        method: "POST", headers: {{ "Content-Type": "application/json", "X-Painel-Dev": SEGREDO }},
+        body: JSON.stringify({{ entidade: entidade, operacao: operacao, entrada: entrada }})
+      }}).then(function (r) {{ return r.json().then(function (j) {{ if (!r.ok) throw new Error(j.erro); return j; }}); }});
+    }},
     dados: {{
       ler: function (chave) {{
         return fetch("/_api/dados/" + encodeURIComponent(chave), {{ headers: {{ "X-Painel-Dev": SEGREDO }} }}).then(function (r) {{ return r.json().then(function (j) {{ if (!r.ok) throw new Error(j.erro); return j.valor; }}); }});
@@ -173,8 +179,13 @@ footer button:hover{{background:var(--line)}}footer button b{{color:var(--fg)}}
 </script></body></html>"""
 
 
+def _manifesto_bruto(p) -> dict[str, Any]:
+    return json.loads(p.arquivos["painel.json"].decode("utf-8"))
+
+
 def criar_app(pasta: Path, config: Config, porta: int = 8765) -> ASGIApp:
-    executor = PortalExecutor(PortalCliente(config))
+    cliente = PortalCliente(config)
+    executor = PortalExecutor(cliente)
     segredo = secrets.token_urlsafe(32)
 
     def painel():
@@ -190,9 +201,17 @@ def criar_app(pasta: Path, config: Config, porta: int = 8765) -> ASGIApp:
                                               corpo=corpo, manifesto="null", usuario='""',
                                               cor_primaria="", empresa="", segredo='""'))
         corpo = f'<iframe id="painel" sandbox="{SANDBOX_PAINEL}" title="Painel"></iframe>'
+        manifesto = p.manifesto_publico()
+        bruto = _manifesto_bruto(p)
+        if bruto.get("entidades") is not None:
+            # Modulo com dados: o portal confere as entidades e devolve a definicao que o SDK usa nos formularios.
+            try:
+                manifesto["modulo"] = (await cliente.modulo_validar(bruto)).get("modulo")
+            except Focco3iMcpError as erro:
+                corpo = f'<div class="invalido">Modulo com dados recusado pelo portal: {html.escape(str(erro))}</div>'
         return HTMLResponse(_SHELL.format(
             titulo=html.escape(p.nome), versao=html.escape(p.versao), ambiente=config.ambiente, corpo=corpo,
-            manifesto=json.dumps(p.manifesto_publico(), ensure_ascii=False).replace("</", "<\\/"),
+            manifesto=json.dumps(manifesto, ensure_ascii=False).replace("</", "<\\/"),
             usuario=json.dumps(config.empresa or "usuario do token"),
             cor_primaria=html.escape(config.cor_primaria),
             empresa=html.escape(config.empresa),
@@ -282,7 +301,22 @@ def criar_app(pasta: Path, config: Config, porta: int = 8765) -> ASGIApp:
         arquivo_dados.write_text(json.dumps(guardados, ensure_ascii=False, indent=2), encoding="utf-8")
         return JSONResponse({"valor": guardados[chave]})
 
+    async def entidade(request: Request) -> JSONResponse:
+        """Modulo com dados na pre-visualizacao: o portal cria/estende as tabelas e executa (owner de teste)."""
+        try:
+            corpo = await request.json()
+            p = painel()
+            dados = await cliente.modulo_operar(
+                _manifesto_bruto(p), str(corpo.get("entidade", "")), str(corpo.get("operacao", "")), corpo.get("entrada") or {}
+            )
+        except (PacoteInvalido, Focco3iMcpError) as erro:
+            return JSONResponse({"erro": str(erro)}, status_code=422)
+        except ValueError:
+            return JSONResponse({"erro": "pedido invalido"}, status_code=400)
+        return JSONResponse(dados)
+
     app = Starlette(routes=[
+        Route("/_api/entidade", entidade, methods=["POST"]),
         Route("/_api/dados/{chave}", dados, methods=["GET", "PUT"]),
         Route("/", shell),
         Route("/_host/painel-host.js", host_js),

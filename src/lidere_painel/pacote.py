@@ -118,6 +118,7 @@ HASHES_ANTERIORES: dict[str, frozenset[str]] = {
         {
             "9baddac87d67cfe269d43f27f360b3eb99fb94bb49412a33ee57286facccc523",
             "6463de1516f8661a9f6d3966020c2f54ef5b112017b0bffee90981a893037a71",
+            "a7817b5cd8f3e5486380dd8a38a24e75ac074912694d5647b23f252803d6fc46",
         }
     ),
     "portal.css": frozenset(
@@ -371,11 +372,11 @@ def _montar(
     if not _RE_VERSAO.match(versao):
         problemas.append("versao precisa ser semver (ex.: 1.0.0)")
     menu = manifesto.get("menu") or {}
-    grupo = str(menu.get("grupo") or "Painéis").strip()[:40]
+    grupo = str(menu.get("grupo") or "Painéis").strip()[:120]  # programa: caminho do menu (ex.: "Qualidade › RNC")
     escopos_brutos = manifesto.get("escopos")
     if (
         not isinstance(escopos_brutos, list)
-        or not escopos_brutos
+        or (not escopos_brutos and (manifesto.get("consultas") or manifesto.get("entidades") is None))
         or not all(isinstance(e, str) and _RE_ESCOPO.match(e) for e in escopos_brutos)
     ):
         problemas.append(
@@ -421,7 +422,9 @@ def _montar(
 
     consultas: dict[str, Consulta] = {}
     brutas = manifesto.get("consultas")
-    if not isinstance(brutas, dict) or not brutas:
+    if brutas is None and manifesto.get("entidades") is not None:
+        brutas = {}  # modulo so de cadastro: consultas sao opcionais (as entidades o portal valida)
+    elif not isinstance(brutas, dict) or not brutas:
         problemas.append("consultas: declare ao menos uma consulta")
         brutas = {}
     for consulta_id, bruta in brutas.items():

@@ -61,6 +61,8 @@ class PortalCliente:
             raise EntradaInvalida(dados.get("detail", "Pedido inválido."))
         if resposta.status_code == 422:
             raise SqlBloqueado(dados.get("detail", "Recusado pela governança."))
+        if resposta.status_code == 409:
+            raise EntradaInvalida(dados.get("detail", "Conflito: recarregue e tente de novo."))
         if resposta.status_code == 426:
             raise Focco3iMcpError(dados.get("detail") or "Lidere Builder desatualizado. Peca ao Claude: \"atualiza o Lidere Builder\".")
         if resposta.status_code >= 400:
@@ -69,6 +71,15 @@ class PortalCliente:
 
     async def quem_sou(self) -> dict[str, Any]:
         return await self._chamar("GET", "quem-sou/")
+
+    async def modulo_validar(self, manifesto: dict[str, Any]) -> dict[str, Any]:
+        """Entidades do painel.json conferidas no portal: contrato + o que falta no banco (nada e executado)."""
+        return await self._chamar("POST", "modulo-validar/", {"manifesto": manifesto})
+
+    async def modulo_operar(self, manifesto: dict[str, Any], entidade: str, operacao: str, entrada: dict[str, Any]) -> dict[str, Any]:
+        """CRUD do modulo em desenvolvimento: o portal cria/estende as tabelas e executa a operacao."""
+        corpo = {**(entrada or {}), "manifesto": manifesto, "entidade": entidade, "operacao": operacao}
+        return await self._chamar("POST", "modulo-operar/", corpo)
 
     async def publicar_painel(self, zip_path: Path) -> dict[str, Any]:
         """Publica (ou atualiza) o painel no portal. Mesma validação e escopos do upload pela tela."""

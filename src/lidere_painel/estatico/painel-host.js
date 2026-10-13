@@ -5,6 +5,7 @@
  *   montarHostPainel(iframe, {
  *     contexto: { manifesto, tema, usuario, ambiente },
  *     consultar: async (consulta, parametros) => ({ colunas, linhas, ... }),
+ *     entidade: async (entidade, operacao, entrada) => ({...}),  // opcional: modulo com dados
  *     aoConsultar: (registro) => {},  // opcional, para log na tela
  *     aoMudarAltura: (altura) => {}   // opcional: ajusta o iframe a altura do conteudo
  *   })
@@ -52,6 +53,19 @@ function montarHostPainel(iframe, opcoes) {
         })
         .then(function (valor) { responder({ tipo: "resposta", req: msg.req, ok: true, dados: valor === undefined ? null : valor }); })
         .catch(function (erro) { responder({ tipo: "resposta", req: msg.req, ok: false, erro: String(erro && erro.message || erro) }); });
+    } else if (msg.tipo === "entidade" && opcoes.entidade) {
+      var inicioEnt = Date.now();
+      var rotulo = String(msg.entidade) + "." + String(msg.operacao);
+      Promise.resolve()
+        .then(function () { return opcoes.entidade(String(msg.entidade), String(msg.operacao), msg.entrada || {}); })
+        .then(function (dados) {
+          responder({ tipo: "resposta", req: msg.req, ok: true, dados: dados });
+          if (opcoes.aoConsultar) opcoes.aoConsultar({ consulta: rotulo, ok: true, ms: Date.now() - inicioEnt, dados: { total_linhas: dados && dados.total !== undefined ? dados.total : 1, auditoria_id: "-" } });
+        })
+        .catch(function (erro) {
+          responder({ tipo: "resposta", req: msg.req, ok: false, erro: String(erro && erro.message || erro) });
+          if (opcoes.aoConsultar) opcoes.aoConsultar({ consulta: rotulo, ok: false, ms: Date.now() - inicioEnt, erro: String(erro && erro.message || erro) });
+        });
     }
   }
 

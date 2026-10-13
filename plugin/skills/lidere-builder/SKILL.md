@@ -7,7 +7,7 @@ description: Use para construir com o usuário um PAINEL VIVO (dashboard, tela d
 
 ## Passo 0: CLI na versão certa, depois o guia canônico
 
-**Antes de tudo**, rode `lidere-painel --version`. Tem que mostrar `lidere-painel 0.2.1` (a versão deste plugin). Se mostrar outra versão, se o comando não existir ou se o aviso do início da sessão disser que a CLI está desatualizada: rode a skill `instalar` **antes** de criar qualquer arquivo. Versão antiga gera painel fora do padrão e o portal recusa o pacote.
+**Antes de tudo**, rode `lidere-painel --version`. Tem que mostrar `lidere-painel 0.3.0` (a versão deste plugin). Se mostrar outra versão, se o comando não existir ou se o aviso do início da sessão disser que a CLI está desatualizada: rode a skill `instalar` **antes** de criar qualquer arquivo. Versão antiga gera painel fora do padrão e o portal recusa o pacote.
 
 
 O guia completo mora no produto, para chegar igual ao cliente. **Leia agora**, antes de escrever qualquer arquivo:
@@ -53,8 +53,15 @@ O usuário não deve esperar uma tela "perfeita" que demora horas. Mostre cedo e
    - publique com a skill `deploy` (`lidere-painel publicar <pasta>`): valida, empacota e sobe direto no portal, e devolve o link;
    - mostre o link para o usuário clicar;
    - mate o `servir` que ficou em background.
-   - Sem permissão de publicar? Gere o zip com `lidere-painel empacotar <pasta> --mostrar` (abre a pasta com o arquivo selecionado) e diga quem pode subir (Painéis → Cadastro de Painéis).
+   - Sem permissão de publicar? Gere o zip com `lidere-painel empacotar <pasta> --mostrar` (abre a pasta com o arquivo selecionado) e diga quem pode subir (painel: Painéis → Cadastro de Painéis; programa, com entidades: Programas Especiais → Cadastro de Programas).
 7. **Versão:** se o painel já foi publicado, suba a versão no `painel.json` antes de publicar (versão publicada é imutável).
+
+## Teste do usuário antes de subir (sempre)
+
+1. `lidere-painel servir <pasta>`: se já houver uma pré-visualização no ar (deste ou de outro painel), ela é derrubada e a nova sobe na mesma porta. Não mate processo à mão.
+2. Teste como o usuário: abra a tela, filtre, e em programa **grave, edite e exclua** um registro de verdade (fica no owner de teste).
+3. Pergunte "terminou ou quer ajustar?". Ajuste e teste de novo no mesmo `servir` (ele recompila sozinho).
+4. Terminou: `lidere-painel parar` e só então `empacotar`/`publicar`. Nunca deixe a pré-visualização rodando no fim.
 
 ## Padrão de entrega (o que o usuário vê já na primeira versão)
 

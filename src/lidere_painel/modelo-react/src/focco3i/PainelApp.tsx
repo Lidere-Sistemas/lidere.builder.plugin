@@ -1,4 +1,4 @@
-import { Box, CircularProgress, CssBaseline, ThemeProvider } from '@mui/material';
+import { Box, CircularProgress, CssBaseline, GlobalStyles, ThemeProvider } from '@mui/material';
 import { createContext, ReactNode, useContext, useEffect, useMemo, useState } from 'react';
 import { ContextoPainel, pronto } from './runtime';
 import { coresSerie, criarTema } from './tema';
@@ -25,6 +25,8 @@ export const PainelApp = ({ children }: { children: ReactNode }) => {
   return (
     <ThemeProvider theme={tema}>
       <CssBaseline />
+      {/* Sem fundo próprio: o painel fica sobre o fundo da página do portal (sem a "caixa" do iframe). */}
+      <GlobalStyles styles={{ 'html, body': { background: 'transparent' } }} />
       {contexto ? (
         <Contexto.Provider value={{ contexto, corPrimaria, cores: coresSerie(corPrimaria) }}>{children}</Contexto.Provider>
       ) : (

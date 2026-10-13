@@ -12,6 +12,8 @@
  *   Painel.aoMudarTema(tema => ...)           // "light" | "dark"
  *   Painel.lerDados("metas")                  // -> valor JSON guardado no portal (ou null)
  *   Painel.gravarDados("metas", {...})        // grava (precisa de permissao de alterar o painel)
+ *   Painel.entidade("rnc", "listar", { filtros, ordem, pagina, tamanho })   // modulo com dados
+ *   Painel.entidade("rnc", "criar", { dados, pai_id })  // tambem: obter, alterar, etapa, excluir, historico
  *
  * Dados do painel: so as chaves declaradas em "dados" no painel.json. Ficam no portal,
  * por painel (e por empresa, se a chave for "por_empresa"), com auditoria de quem gravou.
@@ -101,6 +103,9 @@
     },
     gravarDados: function (chave, valor) {
       return pedir({ tipo: "dados-gravar", chave: chave, valor: valor }, true);
+    },
+    entidade: function (entidade, operacao, entrada) {
+      return pedir({ tipo: "entidade", entidade: entidade, operacao: operacao, entrada: entrada || {} }, true);
     },
     aoMudarTema: function (f) { ouvintesTema.push(f); },
   };

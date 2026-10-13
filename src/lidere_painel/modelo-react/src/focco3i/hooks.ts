@@ -1,5 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { consultar, gravarDados, lerDados, Parametros, ResultadoConsulta } from './runtime';
+import {
+  ConsultaEntidade,
+  consultar,
+  entidade,
+  gravarDados,
+  lerDados,
+  Pagina,
+  Parametros,
+  Registro,
+  ResultadoConsulta
+} from './runtime';
 
 export interface EstadoConsulta<T> {
   dados: T[];
@@ -90,4 +100,44 @@ export function useDadosPainel<T>(chave: string, padrao: T): EstadoDados<T> {
   );
 
   return { valor, carregando, gravando, erro, gravar };
+}
+
+export interface EstadoEntidade {
+  registros: Registro[];
+  total: number;
+  carregando: boolean;
+  erro: string | null;
+  recarregar: () => void;
+}
+
+/**
+ * Lista os registros de uma entidade do módulo (portal filtra pela empresa da sessão).
+ * Volta a buscar quando filtros/ordem mudam ou quando `recarregar()` é chamado (depois de gravar).
+ */
+export function useEntidade(nome: string, consulta: ConsultaEntidade = {}, opcoes: { habilitada?: boolean } = {}): EstadoEntidade {
+  const { habilitada = true } = opcoes;
+  const chave = JSON.stringify(consulta);
+  const [pagina, setPagina] = useState<Pagina | null>(null);
+  const [carregando, setCarregando] = useState(habilitada);
+  const [erro, setErro] = useState<string | null>(null);
+  const [versao, setVersao] = useState(0);
+  const ultima = useRef(0);
+
+  useEffect(() => {
+    if (!habilitada) {
+      setCarregando(false);
+      return;
+    }
+    const id = ++ultima.current;
+    setCarregando(true);
+    setErro(null);
+    entidade(nome)
+      .listar(JSON.parse(chave))
+      .then((r) => id === ultima.current && setPagina(r))
+      .catch((e: Error) => id === ultima.current && setErro(e.message || 'Falha ao ler os registros.'))
+      .finally(() => id === ultima.current && setCarregando(false));
+  }, [nome, chave, habilitada, versao]);
+
+  const recarregar = useCallback(() => setVersao((v) => v + 1), []);
+  return { registros: pagina?.registros ?? [], total: pagina?.total ?? 0, carregando, erro, recarregar };
 }

@@ -19,17 +19,18 @@ Quem usa é gente de negócio, não de TI. **Você faz tudo**; o usuário só ap
 
 1. **Programa de apoio (uv).** Se faltar, instale com o comando da tabela. Ele não pede admin. Nesta sessão o app ainda não enxerga o programa novo pelo nome: chame **pelo caminho completo** da pasta dos programas até o fim da instalação.
 2. **CLI do Lidere Builder** (já traz o Node junto, não instale Node à parte; não pede login):
-   `<pasta dos programas>/uv tool install --force git+https://github.com/Lidere-Sistemas/lidere.builder.plugin@v0.2.1`
+   `<pasta dos programas>/uv tool install --force git+https://github.com/Lidere-Sistemas/lidere.builder.plugin@v0.3.0`
    Use exatamente essa versão (é a deste plugin); não instale da `main`.
    Se der erro de rede ou dizer que falta o `git`, peça ao usuário para instalar o Git (git-scm.com, opções padrão) e tente de novo.
-3. **Liberar os comandos do dia a dia** (para não pedir aprovação a cada passo). Explique em uma frase e peça o ok. Depois acrescente, sem apagar nada do que já existe, em `~/.claude/settings.json` (no Windows, `%USERPROFILE%\.claude\settings.json`), dentro de `permissions.allow`, estas regras para cada comando `status`, `novo`, `servir`, `validar`, `empacotar` e `atualizar`:
+3. **Liberar os comandos do dia a dia** (para não pedir aprovação a cada passo). Explique em uma frase e peça o ok. Depois acrescente, sem apagar nada do que já existe, em `~/.claude/settings.json` (no Windows, `%USERPROFILE%\.claude\settings.json`), dentro de `permissions.allow`, estas regras para cada comando `status`, `novo`, `servir`, `validar`, `empacotar`, `atualizar` e `parar`:
    ```json
    "Bash(lidere-painel status *)", "PowerShell(lidere-painel status *)",
    "Bash(lidere-painel novo *)", "PowerShell(lidere-painel novo *)",
    "Bash(lidere-painel servir *)", "PowerShell(lidere-painel servir *)",
    "Bash(lidere-painel validar *)", "PowerShell(lidere-painel validar *)",
    "Bash(lidere-painel empacotar *)", "PowerShell(lidere-painel empacotar *)",
-   "Bash(lidere-painel atualizar *)", "PowerShell(lidere-painel atualizar *)"
+   "Bash(lidere-painel atualizar *)", "PowerShell(lidere-painel atualizar *)",
+   "Bash(lidere-painel parar*)", "PowerShell(lidere-painel parar*)"
    ```
    **Nunca** libere `publicar`, `entrar` nem `configurar`: publicar muda o que os outros veem no portal e os outros dois mexem no login. Esses continuam pedindo o ok do usuário a cada vez.
    Se o arquivo não existir, crie com `{"permissions": {"allow": [ ... ]}}`. Leia antes de editar; JSON inválido quebra as configurações do usuário.
