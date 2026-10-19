@@ -110,6 +110,8 @@ GERADO_POR = "GERADO_POR.txt"
 _RE_GERADO_POR = re.compile(r"^lidere-painel (\d+\.\d+\.\d+)\s*$")
 ARQUIVOS_DA_PLATAFORMA = ("painel-runtime.js", "portal.css", "inter-latin.woff2")
 """Arquivos que vem do focco3i, nao do autor do painel: precisam ser identicos a uma versao oficial."""
+ARQUIVOS_OBRIGATORIOS = ("painel-runtime.js",)
+"""Os demais (portal.css e a fonte) so existem no padrao visual mui."""
 
 HASHES_ANTERIORES: dict[str, frozenset[str]] = {
     # Versoes oficiais anteriores continuam aceitas: painel ja publicado nao quebra quando
@@ -399,15 +401,20 @@ def _montar(
             "por_empresa": bool(def_dado.get("por_empresa", False)),
         }
 
+    # Runtime sempre. portal.css e a fonte Inter so no padrao mui: o web2 leva estilo e fonte no build
+    # (Tailwind com os tokens do portal). Quando vierem, precisam ser os oficiais.
     for oficial in ARQUIVOS_DA_PLATAFORMA:
         conteudo_oficial = arquivos.get(oficial)
+        if conteudo_oficial is None and oficial not in ARQUIVOS_OBRIGATORIOS:
+            continue
         if conteudo_oficial is None or hashlib.sha256(conteudo_oficial).hexdigest() not in _hashes_aceitos(oficial):
             problemas.append(
                 f"{oficial} ausente ou diferente da versao oficial do focco3i. Nao edite esse arquivo: "
                 "rode `lidere-painel atualizar <pasta>` e ponha seu estilo num css proprio."
             )
     indice = arquivos.get("index.html", b"").decode("utf-8", "ignore")
-    for referencia in ("portal.css", "painel-runtime.js"):
+    referencias = ["painel-runtime.js"] + (["portal.css"] if "portal.css" in arquivos else [])
+    for referencia in referencias:
         if indice and referencia not in indice:
             problemas.append(f"index.html precisa carregar {referencia} (padrao do portal)")
 

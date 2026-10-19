@@ -139,7 +139,7 @@ footer button:hover{{background:var(--line)}}footer button b{{color:var(--fg)}}
   alternar(salvo === "1");
   botao.addEventListener("click", function () {{ alternar(rodape.classList.contains("fechado")); }});
   var host = montarHostPainel(iframe, {{
-    contexto: {{ manifesto: {manifesto}, tema: "light", usuario: {usuario}, ambiente: "{ambiente}",
+    contexto: {{ manifesto: {manifesto}, tema: (window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches) ? "dark" : "light", usuario: {usuario}, ambiente: "{ambiente}",
                portal: {{ cor_primaria: "{cor_primaria}", empresa: "{empresa}" }} }},
     consultar: function (consulta, parametros) {{
       return fetch("/_api/consultas/" + encodeURIComponent(consulta), {{

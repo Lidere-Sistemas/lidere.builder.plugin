@@ -1,0 +1,6 @@
+-- Escreva aqui UM SELECT que responde a pergunta principal do painel.
+--
+-- Tabelas, colunas, joins e regras vêm do MCP lidere-builder-f3i, nunca de memória:
+--   guia_painel (contrato e regras de SQL), listar_conhecimento / ler_conhecimento,
+--   descrever_tabela e listar_fks. Declare em painel.json os escopos que
+--   `lidere-painel status` mostra e um parâmetro para cada bind (:nome) usado aqui.

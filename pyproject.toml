@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "lidere-builder"
-version = "0.3.1"
+version = "0.4.0"
 description = "Lidere Builder: CLI de painel vivo e plugin do Claude Code para construir painéis sobre o ERP pelo portal."
 readme = "README.md"
 requires-python = ">=3.12"
@@ -27,7 +27,8 @@ lidere-painel = "lidere_painel.cli:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/lidere_painel"]
-artifacts = ["src/lidere_painel/estatico/**", "src/lidere_painel/modelo-react/**"]
+artifacts = ["src/lidere_painel/estatico/**", "src/lidere_painel/modelo-react/**", "src/lidere_painel/modelo-web2/**"]
+exclude = ["**/node_modules/**", "**/build/**"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

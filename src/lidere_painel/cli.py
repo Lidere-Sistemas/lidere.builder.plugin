@@ -1,7 +1,7 @@
 """CLI `lidere-painel`: criar, ver ao vivo, validar e empacotar um painel.
 
-    lidere-painel novo <pasta>           cria o painel (React + TypeScript com o SDK do portal)
-    lidere-painel atualizar <pasta>     poe runtime, portal.css e fonte na versao oficial
+    lidere-painel novo <pasta>           cria o painel (React + TypeScript no padrao visual do portal)
+    lidere-painel atualizar <pasta>     poe runtime, SDK e configuracao de build na versao oficial
     lidere-painel servir <pasta>        abre a pre-visualizacao ao vivo em 127.0.0.1
     lidere-painel validar <pasta>       confere o contrato e roda cada consulta uma vez
     lidere-painel empacotar <pasta>     valida e gera dist/<id>-<versao>.zip
@@ -30,26 +30,50 @@ from lidere_painel.portal import PortalCliente, PortalExecutor
 NIVEL_CONSULTA = 2
 from lidere_painel.projeto import (
     ARQUIVOS_DE_BUILD,
-    MODELO_REACT,
+    MODELOS,
+    PADROES,
     ErroDeBuild,
     construir,
     construir_dependencias,
     encerrar_vigia,
     iniciar_vigia,
+    modelo_do_projeto,
     montar_area,
+    plataforma_do_modelo,
 )
 
 _PAINEL = Path(__file__).parent
 _ESTATICO = _PAINEL / "estatico"
-_PLATAFORMA = ("painel-runtime.js", "portal.css", "inter-latin.woff2")
+_NOMES_PADRAO = {"web2": "web2 (React 19 + Tailwind, tokens do portal)", "mui": "mui (React + MUI)"}
 
 
-def _novo(pasta: Path) -> int:
-    """Painel novo, sempre React + TypeScript com o SDK do portal."""
+def _padrao_do_portal() -> str | None:
+    """Pergunta ao portal logado qual e o padrao visual dele. None = sem login ou portal fora do ar."""
+    try:
+        config = Config.de_ambiente()
+        return asyncio.run(PortalCliente(config).padrao_visual())
+    except Focco3iMcpError as erro:
+        print(f"Nao consegui perguntar o padrao visual ao portal: {erro}", file=sys.stderr)
+        return None
+    except Exception as erro:  # noqa: BLE001 - qualquer falha aqui cai no padrao de sempre (mui)
+        print(f"Nao consegui perguntar o padrao visual ao portal ({erro.__class__.__name__}).", file=sys.stderr)
+        return None
+
+
+def _novo(pasta: Path, padrao: str | None = None) -> int:
+    """Painel novo, sempre React + TypeScript, no padrao visual do portal (web2 ou mui)."""
     if pasta.exists() and any(pasta.iterdir()):
         print(f"{pasta} ja existe e nao esta vazia.", file=sys.stderr)
         return 1
-    shutil.copytree(MODELO_REACT, pasta, dirs_exist_ok=True, ignore=shutil.ignore_patterns("node_modules", "build"))
+    if padrao is None:
+        padrao = _padrao_do_portal()
+        if padrao is None:
+            # Sem login ou portal fora do ar: segue como sempre foi (mui). Nunca trava a criacao.
+            padrao = "mui"
+            print("Usando o padrao mui (portal nao informou o padrao visual). Use --padrao web2 para o modelo novo.", file=sys.stderr)
+        else:
+            print(f"Padrao visual do portal: {_NOMES_PADRAO[padrao]}.")
+    shutil.copytree(MODELOS[padrao], pasta, dirs_exist_ok=True, ignore=shutil.ignore_patterns("node_modules", "build"))
     _atualizar(pasta, silencioso=True)
     print("Instalando dependencias...")
     try:
@@ -68,22 +92,27 @@ def _atualizar(pasta: Path, silencioso: bool = False) -> int:
     if not (pasta / "painel.json").is_file() or not (pasta / "src").is_dir():
         print(f"{pasta} nao e um painel (falta painel.json ou src/). Crie com `lidere-painel novo <pasta>`.", file=sys.stderr)
         return 1
+    padrao = modelo_do_projeto(pasta)
+    modelo = MODELOS[padrao]
     publico = pasta / "public"
     publico.mkdir(exist_ok=True)
-    for nome in _PLATAFORMA:
+    plataforma = plataforma_do_modelo(padrao)
+    for nome in plataforma:
         shutil.copy2(_ESTATICO / nome, publico / nome)
+    for nome in set(plataforma_do_modelo("mui")) - set(plataforma):
+        (publico / nome).unlink(missing_ok=True)  # web2 nao usa portal.css nem a Inter
     sdk = pasta / "src" / "focco3i"
     if sdk.exists():
         shutil.rmtree(sdk)
-    shutil.copytree(MODELO_REACT / "src" / "focco3i", sdk)
+    shutil.copytree(modelo / "src" / "focco3i", sdk)
     # Configuracao de build oficial: o build executa o que estiver nela (ver conferir_projeto).
     for nome in ARQUIVOS_DE_BUILD:
-        shutil.copy2(MODELO_REACT / nome, pasta / nome)
+        shutil.copy2(modelo / nome, pasta / nome)
     solto = pasta / "vite.config.js"
     if solto.exists():
         solto.unlink()
     if not silencioso:
-        print(f"Arquivos da plataforma, SDK (src/focco3i) e configuracao de build atualizados em {pasta}.")
+        print(f"Arquivos da plataforma, SDK (src/focco3i) e configuracao de build ({padrao}) atualizados em {pasta}.")
     return 0
 
 
@@ -243,10 +272,14 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="lidere-painel", description="Paineis vivos sobre o ERP, publicados no portal.")
     parser.add_argument("--version", action="version", version=f"lidere-painel {__version__}")
     sub = parser.add_subparsers(dest="comando", required=True)
-    p_novo = sub.add_parser("novo", help="cria um painel a partir do modelo")
+    p_novo = sub.add_parser("novo", help="cria um painel no padrao visual do portal")
     p_novo.add_argument("pasta", type=Path)
+    p_novo.add_argument(
+        "--padrao", choices=PADROES, default=None,
+        help="padrao visual: web2 (React 19 + Tailwind) ou mui (React + MUI). Sem a opcao, pergunta ao portal logado.",
+    )
     p_novo.add_argument("--react", action="store_true", help=argparse.SUPPRESS)  # aceito por compatibilidade: sempre React
-    p_atu = sub.add_parser("atualizar", help="atualiza runtime, portal.css e fonte para a versao oficial")
+    p_atu = sub.add_parser("atualizar", help="atualiza runtime, SDK e configuracao de build para a versao oficial")
     p_atu.add_argument("pasta", type=Path)
     p_servir = sub.add_parser("servir", help="pre-visualizacao ao vivo")
     p_servir.add_argument("pasta", type=Path)
@@ -327,7 +360,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.comando == "novo":
-        return _novo(args.pasta)
+        return _novo(args.pasta, args.padrao)
     if args.comando == "atualizar":
         return _atualizar(args.pasta)
 

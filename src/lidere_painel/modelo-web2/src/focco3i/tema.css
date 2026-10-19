@@ -1,0 +1,162 @@
+/*
+ * Padrão visual web2 do portal (template.web2): Tailwind 4 + tokens shadcn (new-york).
+ * As variáveis são as MESMAS do index.css do portal; não edite aqui (vem com `lidere-painel atualizar`).
+ * A cor primária vem da empresa logada (contexto do portal) e o tema claro/escuro também.
+ */
+@import "tailwindcss";
+
+/* O Tailwind só olha o código do painel (src/), nunca node_modules. */
+@source "../";
+
+@custom-variant dark (&:is(.dark *));
+
+/* Geist Variable embutida no pacote (o painel não tem rede). */
+@font-face {
+    font-family: "Geist Variable";
+    font-style: normal;
+    font-display: swap;
+    font-weight: 100 900;
+    src: url("@fontsource-variable/geist/files/geist-latin-wght-normal.woff2") format("woff2-variations");
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+        U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+    font-family: "Geist Variable";
+    font-style: normal;
+    font-display: swap;
+    font-weight: 100 900;
+    src: url("@fontsource-variable/geist/files/geist-latin-ext-wght-normal.woff2") format("woff2-variations");
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329,
+        U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@theme inline {
+    --font-sans:
+        "Geist Variable", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+        "Segoe UI Symbol", "Noto Color Emoji";
+    --radius-sm: calc(var(--radius) - 4px);
+    --radius-md: calc(var(--radius) - 2px);
+    --radius-lg: var(--radius);
+    --radius-xl: calc(var(--radius) + 4px);
+    --radius-2xl: calc(var(--radius) + 8px);
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+    --color-popover: var(--popover);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-destructive: var(--destructive);
+    --color-destructive-foreground: var(--destructive-foreground);
+    --color-border: var(--border);
+    --color-input: var(--input);
+    --color-ring: var(--ring);
+    --color-brand-accent: var(--brand-accent);
+    --color-chart-1: var(--chart-1);
+    --color-chart-2: var(--chart-2);
+    --color-chart-3: var(--chart-3);
+    --color-chart-4: var(--chart-4);
+    --color-chart-5: var(--chart-5);
+    --color-sucesso: var(--sucesso);
+    --color-alerta: var(--alerta);
+}
+
+:root {
+    --radius: 0.625rem;
+    --background: oklch(0.985 0.002 265);
+    --foreground: oklch(0.21 0.012 265);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.21 0.012 265);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.21 0.012 265);
+    /* Primária = cor da EMPRESA (o PainelApp troca pela do portal). Default = navy #2A2849. */
+    --primary: oklch(0.296 0.059 285);
+    --brand-accent: oklch(0.704 0.141 230.4);
+    --primary-foreground: oklch(0.985 0 0);
+    --secondary: oklch(0.967 0.004 265);
+    --secondary-foreground: oklch(0.21 0.012 265);
+    --muted: oklch(0.967 0.004 265);
+    --muted-foreground: oklch(0.552 0.018 265);
+    --accent: oklch(0.953 0.007 265);
+    --accent-foreground: oklch(0.21 0.012 265);
+    --destructive: oklch(0.609 0.2396 29.73);
+    --destructive-foreground: oklch(0.834 0.0918 27.37);
+    --border: oklch(0.922 0.005 265);
+    --input: oklch(0.905 0.006 265);
+    --ring: var(--brand-accent);
+    --chart-1: var(--primary);
+    --chart-2: var(--brand-accent);
+    --chart-3: oklch(0.441 0.2 291.9);
+    --chart-4: oklch(0.828 0.189 84.429);
+    --chart-5: oklch(0.769 0.188 70.08);
+    /* Status (mesma matiz dos toasts do portal). */
+    --sucesso: oklch(0.627 0.17 149.58);
+    --alerta: oklch(0.666 0.157 58);
+}
+
+.dark {
+    --background: oklch(0.356 0.006 265);
+    --foreground: oklch(0.97 0.004 265);
+    --card: oklch(0.325 0.007 265);
+    --card-foreground: oklch(0.97 0.004 265);
+    --popover: oklch(0.325 0.007 265);
+    --popover-foreground: oklch(0.97 0.004 265);
+    --secondary: oklch(0.41 0.008 265);
+    --secondary-foreground: oklch(0.97 0.004 265);
+    --muted: oklch(0.41 0.008 265);
+    --muted-foreground: oklch(0.83 0.012 265);
+    --accent: oklch(0.44 0.009 265);
+    --accent-foreground: oklch(0.97 0.004 265);
+    --destructive: oklch(0.653 0.2332 26.6);
+    --destructive-foreground: oklch(0.37 0.1118 24.4);
+    --border: oklch(0.45 0.009 265);
+    --input: oklch(0.45 0.009 265);
+    --ring: var(--brand-accent);
+    --chart-1: var(--brand-accent);
+    --chart-2: oklch(0.579 0.247 288.2);
+    --chart-3: oklch(0.769 0.188 70.08);
+    --chart-4: oklch(0.627 0.265 303.9);
+    --chart-5: oklch(0.645 0.246 16.439);
+    --sucesso: oklch(0.77 0.17 150);
+    --alerta: oklch(0.82 0.15 75);
+}
+
+@layer base {
+    * {
+        @apply border-border outline-ring/50;
+    }
+    html,
+    body {
+        /* Sem fundo próprio: o painel fica sobre o fundo da página do portal. */
+        background: transparent;
+        color-scheme: light;
+    }
+    /* Escuro: fundo do portal pintado no próprio painel. Com color-scheme dark o navegador pinta o
+       iframe opaco (o portal é light/normal), então o painel assume o mesmo --background do portal. */
+    html.dark {
+        color-scheme: dark;
+        background: var(--background);
+    }
+    body {
+        @apply text-foreground font-sans antialiased;
+        margin: 0;
+    }
+}
+
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+}
+
+@media print {
+    .pf-sem-impressao {
+        display: none !important;
+    }
+}

@@ -2,11 +2,17 @@
 
 O pacote e `build/` (saida do Vite) + painel.json + consultas/. O autor nao mexe nos arquivos
 de plataforma: eles ficam em public/ e o Vite copia para o build.
+
+Dois modelos, um por padrao visual de portal (a CLI pergunta ao portal qual usar):
+- `web2`: React 19 + Tailwind 4 + componentes estilo shadcn com os tokens do portal web2;
+- `mui`: React 18 + MUI, o padrao dos portais com o tema MUI.
+O projeto diz de qual modelo e pelo `name` do package.json.
 """
 
 from __future__ import annotations
 
 import hashlib
+import json
 import os
 import shutil
 import subprocess
@@ -30,11 +36,22 @@ __all__ = [
     "PLATAFORMA",
     "ESTATICO",
     "MODELO_REACT",
+    "MODELO_WEB2",
+    "MODELOS",
+    "PADROES",
+    "modelo_do_projeto",
+    "plataforma_do_modelo",
 ]
 
 ESTATICO = Path(__file__).with_name("estatico")
 MODELO_REACT = Path(__file__).with_name("modelo-react")
+MODELO_WEB2 = Path(__file__).with_name("modelo-web2")
+MODELOS = {"web2": MODELO_WEB2, "mui": MODELO_REACT}
+"""Padrao visual do portal -> modelo do projeto. `mui` e o padrao de portal que nao informa o dele."""
+PADROES = tuple(MODELOS)
 PLATAFORMA = ("painel-runtime.js", "portal.css", "inter-latin.woff2")
+"""Arquivos de plataforma do modelo `mui` (o `web2` leva so o runtime; estilo e fonte vem no build)."""
+_PLATAFORMA_POR_MODELO = {"mui": PLATAFORMA, "web2": ("painel-runtime.js",)}
 ARQUIVOS_DE_BUILD = ("package.json", "package-lock.json", "vite.config.ts", "tsconfig.json")
 """Configuracao do build: sempre a oficial. O build (tsc + vite) executa o que estiver nela, entao um
 projeto adulterado poderia rodar codigo na maquina do usuario. `lidere-painel atualizar` restaura."""
@@ -50,6 +67,26 @@ class ErroDeBuild(PacoteInvalido):
 
 def eh_react(pasta: Path) -> bool:
     return (pasta / "package.json").is_file() and (pasta / "vite.config.ts").is_file()
+
+
+def _nome_do_pacote(arquivo: Path) -> str | None:
+    try:
+        return json.loads(arquivo.read_text(encoding="utf-8")).get("name")
+    except (OSError, ValueError, AttributeError):
+        return None
+
+
+def modelo_do_projeto(pasta: Path) -> str:
+    """`web2` ou `mui`, pelo `name` do package.json (cada modelo tem o seu). Desconhecido = `mui` (projetos antigos)."""
+    nome = _nome_do_pacote(pasta / "package.json")
+    for padrao, modelo in MODELOS.items():
+        if nome and nome == _nome_do_pacote(modelo / "package.json"):
+            return padrao
+    return "mui"
+
+
+def plataforma_do_modelo(padrao: str) -> tuple[str, ...]:
+    return _PLATAFORMA_POR_MODELO[padrao]
 
 
 def _node_embutido() -> tuple[str, str] | None:
@@ -165,9 +202,10 @@ def conferir_projeto(pasta: Path) -> None:
         raise ErroDeBuild(f"{pasta} nao e um painel React (falta package.json ou vite.config.ts). Crie com `lidere-painel novo <pasta>`.")
     if (pasta / "vite.config.js").exists():
         raise ErroDeBuild("vite.config.js nao e aceito: o painel usa o vite.config.ts oficial. Rode `lidere-painel atualizar <pasta>`.")
+    modelo = MODELOS[modelo_do_projeto(pasta)]
     diferentes = [
         nome for nome in ARQUIVOS_DE_BUILD
-        if not (pasta / nome).is_file() or (pasta / nome).read_bytes() != (MODELO_REACT / nome).read_bytes()
+        if not (pasta / nome).is_file() or (pasta / nome).read_bytes() != (modelo / nome).read_bytes()
     ]
     if diferentes:
         raise ErroDeBuild(

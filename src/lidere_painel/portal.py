@@ -37,8 +37,13 @@ class PortalCliente:
         self._timeout = config.timeout_s + 15
 
     async def _chamar(
-        self, metodo: str, rota: str, corpo: dict[str, Any] | None = None, arquivos: dict[str, Any] | None = None
-    ) -> dict[str, Any]:
+        self,
+        metodo: str,
+        rota: str,
+        corpo: dict[str, Any] | None = None,
+        arquivos: dict[str, Any] | None = None,
+        sem_rota_e_none: bool = False,
+    ) -> dict[str, Any] | None:
         try:
             async with httpx.AsyncClient(timeout=self._timeout) as cliente:
                 token = self._token() if callable(self._token) else self._token
@@ -53,6 +58,8 @@ class PortalCliente:
             dados = resposta.json()
         except ValueError:
             dados = {"detail": resposta.text[:300]}
+        if resposta.status_code == 404 and sem_rota_e_none:
+            return None
         if resposta.status_code == 401:
             raise Focco3iMcpError("Login no portal expirado ou revogado. Rode `lidere-painel entrar` e autorize de novo no navegador.")
         if resposta.status_code == 403:
@@ -71,6 +78,14 @@ class PortalCliente:
 
     async def quem_sou(self) -> dict[str, Any]:
         return await self._chamar("GET", "quem-sou/")
+
+    async def padrao_visual(self) -> str:
+        """Padrao visual do portal para o modelo do painel: `web2` ou `mui`.
+
+        Portal que nao tem a rota (anterior a ela) e `mui`."""
+        r = await self._chamar("GET", "padrao-visual/", sem_rota_e_none=True)
+        padrao = str((r or {}).get("padrao") or "mui").lower()
+        return padrao if padrao in ("web2", "mui") else "mui"
 
     async def modulo_validar(self, manifesto: dict[str, Any]) -> dict[str, Any]:
         """Entidades do painel.json conferidas no portal: contrato + o que falta no banco (nada e executado)."""
