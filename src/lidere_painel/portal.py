@@ -61,7 +61,7 @@ class PortalCliente:
         if resposta.status_code == 404 and sem_rota_e_none:
             return None
         if resposta.status_code == 401:
-            raise Focco3iMcpError("Login no portal expirado ou revogado. Rode `lidere-painel entrar` e autorize de novo no navegador.")
+            raise Focco3iMcpError("Login no portal expirado ou revogado. Chame a ferramenta conectar_cli do MCP lidere-builder-f3i e rode o comando que ela devolver.")
         if resposta.status_code == 403:
             raise ForaDoEscopo(dados.get("detail", "Fora do seu escopo."))
         if resposta.status_code == 400:

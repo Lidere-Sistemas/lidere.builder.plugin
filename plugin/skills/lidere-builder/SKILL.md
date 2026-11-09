@@ -7,7 +7,7 @@ description: Use para construir com o usuário um PAINEL VIVO (dashboard, tela d
 
 ## Passo 0: CLI na versão certa, depois o guia canônico
 
-**Antes de tudo**, rode `lidere-painel --version`. Tem que mostrar `lidere-painel 0.4.0` (a versão deste plugin). Se mostrar outra versão, se o comando não existir ou se o aviso do início da sessão disser que a CLI está desatualizada: rode a skill `instalar` **antes** de criar qualquer arquivo. Versão antiga gera painel fora do padrão e o portal recusa o pacote.
+**Antes de tudo**, rode `lidere-painel --version`. Tem que mostrar `lidere-painel 0.5.0` (a versão deste plugin). Se mostrar outra versão, se o comando não existir ou se o aviso do início da sessão disser que a CLI está desatualizada: rode a skill `instalar` **antes** de criar qualquer arquivo. Versão antiga gera painel fora do padrão e o portal recusa o pacote.
 
 
 O guia completo mora no produto, para chegar igual ao cliente. **Leia agora**, antes de escrever qualquer arquivo:
@@ -88,7 +88,7 @@ lidere-painel publicar <pasta>       # deploy: valida, empacota e publica no por
 lidere-painel empacotar <pasta>      # só o zip (--mostrar abre a pasta), para quem publica pela tela
 ```
 
-- **Binário e login:** a CLI `lidere-painel` é instalada pela skill `instalar` e fala com o portal com o login do usuário (`lidere-painel entrar`, pelo navegador; `status` confere). Os comandos funcionam igual no PowerShell (Windows) e no Bash.
+- **Binário e login:** a CLI `lidere-painel` é instalada pela skill `instalar` e fala com o portal com o login do usuário (o mesmo login do Claude: ferramenta `conectar_cli` do MCP e o comando que ela devolve; `status` confere). Os comandos funcionam igual no PowerShell (Windows) e no Bash.
 - **Cor da empresa:** para vê-la na pré-visualização, use `lidere-painel configurar --cor <main_color da empresa>`.
 
 ## Não-negociáveis

@@ -18,7 +18,7 @@ description: Publica o painel da pasta atual (ou da pasta informada) direto no p
 5. Diga em uma linha o que foi publicado (nome, versão, novo ou atualizado) e mostre o link que o comando imprimiu, para o usuário clicar.
 
 Se o portal recusar, mostre a mensagem como veio e explique o que fazer:
-- **login expirado:** rode `lidere-painel entrar` (o endereço do MCP fica salvo) e tente de novo;
+- **login expirado:** chame a ferramenta `conectar_cli` do MCP, rode o comando que ela devolver e tente de novo;
 - **sem permissão de publicar:** gere o zip com `lidere-painel empacotar <pasta> --mostrar` (abre a pasta com o arquivo selecionado) e diga quem pode subir em Painéis > Cadastro de Painéis (programa, com entidades: Programas Especiais > Cadastro de Programas), ou que o administrador libera a permissão no perfil;
 - **escopo faltando:** o administrador libera o escopo no perfil (MCP > Escopo: ...);
 - **versão já publicada com outro conteúdo:** suba a versão no `painel.json`.

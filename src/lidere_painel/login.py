@@ -14,6 +14,7 @@ registro dinâmico (um POST) e o servidor de retorno de uso único.
 
 from __future__ import annotations
 
+import re
 import threading
 import webbrowser
 from collections.abc import Callable
@@ -29,7 +30,7 @@ from lidere_painel.config import url_aceitavel
 from lidere_painel.erros import Focco3iMcpError
 from lidere_painel.portal import CABECALHO_VERSAO
 
-__all__ = ["entrar", "ErroDeLogin", "CLIENTE", "portal_url_aceitavel"]
+__all__ = ["entrar", "entrar_com_codigo", "ErroDeLogin", "CLIENTE", "portal_url_aceitavel"]
 
 CLIENTE = "lidere-painel"
 ESCOPO = "focco3i"
@@ -101,6 +102,47 @@ class _Retorno:
         self._servidor.server_close()
 
 
+_CODIGO = re.compile(r"^[A-Za-z0-9_-]{20,100}$")
+
+
+def _conferir_entrega(resgate: httpx.Response, de_novo: str) -> tuple[str, str]:
+    if resgate.status_code == 426:
+        raise ErroDeLogin("Esta versao do Lidere Builder e antiga para este portal. Peca ao Claude: \"atualiza o Lidere Builder\".")
+    if resgate.status_code == 503:
+        raise ErroDeLogin("O login pela CLI ainda não está ligado neste portal. Fale com a Lidere.")
+    if resgate.status_code != 200:
+        raise ErroDeLogin(f"O MCP não entregou o acesso ao portal. {de_novo}")
+    try:
+        dados = resgate.json()
+    except ValueError as erro:
+        raise ErroDeLogin("Resposta inesperada do MCP ao entregar o acesso ao portal. Fale com a Lidere.") from erro
+    portal_url = str(dados.get("portal_url", ""))
+    if not str(dados.get("token", "")).startswith("f3i_") or not portal_url_aceitavel(portal_url):
+        raise ErroDeLogin("Resposta inesperada do MCP ao entregar o acesso ao portal. Fale com a Lidere.")
+    return portal_url, dados["token"]
+
+
+def entrar_com_codigo(mcp_url: str, codigo: str, transporte: httpx.BaseTransport | None = None) -> tuple[str, str]:
+    """Login único: usa o código de uso único da ferramenta `conectar_cli` do MCP (o Claude já conectado).
+
+    Sem navegador. O código vale uma vez e por pouco tempo; devolve (url_da_api_do_portal, token_do_portal).
+    """
+    codigo = (codigo or "").strip()
+    if not _CODIGO.match(codigo):
+        raise ErroDeLogin("Codigo invalido. Peca ao Claude para conectar a CLI de novo (ferramenta conectar_cli).")
+    de_novo = "Peca ao Claude para conectar a CLI de novo (o codigo vale uma vez, por 2 minutos)."
+    try:
+        with httpx.Client(timeout=20, transport=transporte) as http:
+            resgate = http.post(
+                f"{_base(mcp_url)}/oauth/codigo-cli",
+                json={"codigo": codigo},
+                headers={CABECALHO_VERSAO: __version__},
+            )
+    except httpx.HTTPError as erro:
+        raise ErroDeLogin(f"Não consegui falar com o MCP em {mcp_url}. Confira a rede.") from erro
+    return _conferir_entrega(resgate, de_novo)
+
+
 def entrar(
     mcp_url: str,
     abrir_navegador: Callable[[str], object] = webbrowser.open,
@@ -168,17 +210,7 @@ def entrar(
             )
         except Exception as erro:  # authlib levanta OAuthError e httpx.HTTPError
             raise ErroDeLogin(f"Não consegui concluir o login: {erro}") from erro
-        if resgate.status_code == 426:
-            raise ErroDeLogin("Esta versao do Lidere Builder e antiga para este portal. Peca ao Claude: \"atualiza o Lidere Builder\".")
-        if resgate.status_code == 503:
-            raise ErroDeLogin("O login pela CLI ainda não está ligado neste portal. Fale com a Lidere.")
-        if resgate.status_code != 200:
-            raise ErroDeLogin("O MCP não entregou o acesso ao portal. Rode `lidere-painel entrar` de novo.")
-        dados = resgate.json()
-        portal_url = str(dados.get("portal_url", ""))
-        if not str(dados.get("token", "")).startswith("f3i_") or not portal_url_aceitavel(portal_url):
-            raise ErroDeLogin("Resposta inesperada do MCP ao entregar o acesso ao portal. Fale com a Lidere.")
-        return portal_url, dados["token"]
+        return _conferir_entrega(resgate, "Rode `lidere-painel entrar` de novo.")
     finally:
         retorno.fechar()
         http.close()

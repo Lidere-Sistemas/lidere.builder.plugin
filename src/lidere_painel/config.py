@@ -60,7 +60,8 @@ class Config:
         token = _env("LIDERE_PORTAL_TOKEN", "FOCCO3I_PORTAL_TOKEN") or salvo.get("portal_token")
         if not url or not token:
             raise ConfigInvalida(
-                "CLI sem login no portal. Rode `lidere-painel entrar --mcp <endereço do MCP>` e autorize no navegador."
+                "CLI sem login no portal. Chame a ferramenta conectar_cli do MCP lidere-builder-f3i e rode o comando que ela "
+                "devolver (usa o login do Claude, sem navegador)."
             )
         if not token.startswith("f3i_"):
             raise ConfigInvalida("Token inválido: o token do portal começa com f3i_.")

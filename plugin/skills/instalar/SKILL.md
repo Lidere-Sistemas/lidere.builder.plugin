@@ -1,6 +1,6 @@
 ---
 name: instalar
-description: Instala e confere o Lidere Builder no computador do usuário (Windows ou macOS): CLI lidere-painel com o Node embutido, login no portal pelo navegador, liberação dos comandos e conexão do MCP lidere-builder-f3i. Use na primeira vez, quando um comando lidere-painel não existir, ou quando o usuário pedir para conferir a instalação.
+description: Instala e confere o Lidere Builder no computador do usuário (Windows ou macOS): CLI lidere-painel com o Node embutido, liberação dos comandos, conexão do MCP lidere-builder-f3i (o único login) e a CLI conectada com esse mesmo login. Use na primeira vez, quando um comando lidere-painel não existir, ou quando o usuário pedir para conferir a instalação.
 disable-model-invocation: false
 ---
 
@@ -19,10 +19,10 @@ Quem usa é gente de negócio, não de TI. **Você faz tudo**; o usuário só ap
 
 1. **Programa de apoio (uv).** Se faltar, instale com o comando da tabela. Ele não pede admin. Nesta sessão o app ainda não enxerga o programa novo pelo nome: chame **pelo caminho completo** da pasta dos programas até o fim da instalação.
 2. **CLI do Lidere Builder** (já traz o Node junto, não instale Node à parte; não pede login):
-   `<pasta dos programas>/uv tool install --force git+https://github.com/Lidere-Sistemas/lidere.builder.plugin@v0.4.0`
+   `<pasta dos programas>/uv tool install --force git+https://github.com/Lidere-Sistemas/lidere.builder.plugin@v0.5.0`
    Use exatamente essa versão (é a deste plugin); não instale da `main`.
    Se der erro de rede ou dizer que falta o `git`, peça ao usuário para instalar o Git (git-scm.com, opções padrão) e tente de novo.
-3. **Liberar os comandos do dia a dia** (para não pedir aprovação a cada passo). Explique em uma frase e peça o ok. Depois acrescente, sem apagar nada do que já existe, em `~/.claude/settings.json` (no Windows, `%USERPROFILE%\.claude\settings.json`), dentro de `permissions.allow`, estas regras para cada comando `status`, `novo`, `servir`, `validar`, `empacotar`, `atualizar` e `parar`:
+3. **Liberar os comandos do dia a dia** (para não pedir aprovação a cada passo). Explique em uma frase e peça o ok. Depois acrescente, sem apagar nada do que já existe, em `~/.claude/settings.json` (no Windows, `%USERPROFILE%\.claude\settings.json`), dentro de `permissions.allow`, estas regras para cada comando `status`, `novo`, `servir`, `validar`, `empacotar`, `atualizar` e `parar`, mais o `entrar --codigo`:
    ```json
    "Bash(lidere-painel status *)", "PowerShell(lidere-painel status *)",
    "Bash(lidere-painel novo *)", "PowerShell(lidere-painel novo *)",
@@ -30,21 +30,18 @@ Quem usa é gente de negócio, não de TI. **Você faz tudo**; o usuário só ap
    "Bash(lidere-painel validar *)", "PowerShell(lidere-painel validar *)",
    "Bash(lidere-painel empacotar *)", "PowerShell(lidere-painel empacotar *)",
    "Bash(lidere-painel atualizar *)", "PowerShell(lidere-painel atualizar *)",
-   "Bash(lidere-painel parar*)", "PowerShell(lidere-painel parar*)"
+   "Bash(lidere-painel parar*)", "PowerShell(lidere-painel parar*)",
+   "Bash(lidere-painel entrar --codigo *)", "PowerShell(lidere-painel entrar --codigo *)"
    ```
-   **Nunca** libere `publicar`, `entrar` nem `configurar`: publicar muda o que os outros veem no portal e os outros dois mexem no login. Esses continuam pedindo o ok do usuário a cada vez.
+   **Nunca** libere `publicar`, `configurar` nem o `entrar` sem `--codigo`: publicar muda o que os outros veem no portal e os outros dois mexem no login; esses continuam pedindo o ok do usuário a cada vez. O `entrar --codigo` pode ser liberado: só usa o login que o próprio usuário já deu ao Claude.
    Se o arquivo não existir, crie com `{"permissions": {"allow": [ ... ]}}`. Leia antes de editar; JSON inválido quebra as configurações do usuário.
-4. **Login no portal pelo navegador** (o mesmo login do Claude, sem copiar nada):
-   `<pasta dos programas>/lidere-painel entrar --mcp <endereço do MCP>`
-   - O endereço do MCP é o que o usuário informou ao ativar o plugin (ex.: `https://mcp.empresa.com.br/mcp`). Se você não souber, pergunte: "qual o endereço do Lidere Builder que você recebeu da TI ou da Lidere?".
-   - O navegador abre a tela "Autorizar" do portal. Diga ao usuário: "autorize no navegador e volte aqui".
-   - Depois confira com `lidere-painel status`: deve mostrar o usuário e as áreas liberadas.
-   - Sem áreas liberadas: quem libera é o administrador do portal, no perfil do usuário (MCP > as áreas que ele deve enxergar).
-5. **Endereço do MCP no plugin.** Instalado pela tela de Plugins do app, o plugin pode ficar sem o endereço (o conector aparece com "Vincular" e não conecta). Confira:
+4. **Endereço do MCP no plugin.** Instalado pela tela de Plugins do app, o plugin pode ficar sem o endereço (o conector aparece com "Vincular" e não conecta). Confira:
    `claude plugin configure lidere-builder@lidere --json`
-   - Se `mcp_url` estiver vazio, grave o endereço que o usuário recebeu (o mesmo do passo 4). PowerShell: `'{"mcp_url":"<endereço>"}' | claude plugin configure lidere-builder@lidere --values-stdin`; Bash: `echo '{"mcp_url":"<endereço>"}' | claude plugin configure lidere-builder@lidere --values-stdin`. Depois peça para fechar e abrir o app.
+   - Se `mcp_url` estiver vazio, grave o endereço que o usuário recebeu da TI ou da Lidere (ex.: `https://portal.empresa.com.br/mcp`; se você não souber, pergunte). PowerShell: `'{"mcp_url":"<endereço>"}' | claude plugin configure lidere-builder@lidere --values-stdin`; Bash: `echo '{"mcp_url":"<endereço>"}' | claude plugin configure lidere-builder@lidere --values-stdin`. Depois peça para fechar e abrir o app.
    - Se o comando `claude` não existir nesta máquina, oriente: digitar `/plugin` na conversa, abrir **lidere-builder** e preencher o endereço em **Configurar**.
-6. **Conexão do Claude com o portal (MCP).** Chame a ferramenta `meus_escopos` do `lidere-builder-f3i`. Se ela pedir login, oriente o usuário a clicar no aviso de autenticação que o app mostra (no terminal, `/mcp` → `lidere-builder-f3i` → autenticar).
+5. **O ÚNICO login: conectar o Claude ao portal.** Chame a ferramenta `meus_escopos` do `lidere-builder-f3i`. Se ela pedir login, oriente o usuário a clicar em **Conectar** no aviso que o app mostra (no terminal, `/mcp` → `lidere-builder-f3i` → autenticar) e autorizar na tela do portal. Este é o único login do Builder.
+   - Sem áreas liberadas: quem libera é o administrador do portal, no perfil do usuário (MCP > as áreas que ele deve enxergar).
+6. **CLI com o mesmo login (sem navegador).** Chame a ferramenta `conectar_cli` do `lidere-builder-f3i` e **rode na hora** o comando que ela devolver (`lidere-painel entrar --codigo ... --mcp ...`, pelo caminho completo da pasta dos programas nesta sessão). Não mostre nem guarde o código: vale uma vez, por 2 minutos. Confira com `lidere-painel status` (deve mostrar o usuário e as áreas). Se o código vencer, chame `conectar_cli` de novo.
 7. **Pré-visualização dentro do app.** Na pasta em que a sessão foi aberta, crie `.claude/launch.json` (se ainda não existir) para o painel abrir no navegador embutido do app:
    ```json
    {"version": "0.0.1", "configurations": [{"name": "painel", "url": "http://127.0.0.1:8765", "port": 8765}]}

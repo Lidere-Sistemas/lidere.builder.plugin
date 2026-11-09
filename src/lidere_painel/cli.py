@@ -294,8 +294,9 @@ def main(argv: list[str] | None = None) -> int:
     p_emp.add_argument("--mostrar", action="store_true", help="abre a pasta do zip com o arquivo selecionado")
     p_pub = sub.add_parser("publicar", help="valida, empacota e publica no portal (deploy)")
     p_pub.add_argument("pasta", type=Path)
-    p_ent = sub.add_parser("entrar", help="login no portal pelo navegador (o mesmo login do Claude)")
+    p_ent = sub.add_parser("entrar", help="login no portal com o login do Claude (--codigo) ou pelo navegador")
     p_ent.add_argument("--mcp", help="endereco do MCP do portal (ex.: https://mcp.cliente.com.br/mcp)")
+    p_ent.add_argument("--codigo", help="codigo de uso unico da ferramenta conectar_cli do MCP (sem navegador)")
     p_conf = sub.add_parser("configurar", help="grava URL do portal e token pessoal (~/.lidere-builder/config.json)")
     p_conf.add_argument("--url", help="URL da API do portal (ex.: https://portal.cliente.com.br/api)")
     p_conf.add_argument("--cor", help="cor primaria da empresa para a pre-visualizacao (main_color)")
@@ -333,7 +334,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.comando == "entrar":
         from lidere_painel.config import mcp_salvo, url_aceitavel
-        from lidere_painel.login import ErroDeLogin, entrar
+        from lidere_painel.login import ErroDeLogin, entrar, entrar_com_codigo
 
         mcp_url = args.mcp or mcp_salvo()
         if not mcp_url:
@@ -342,9 +343,12 @@ def main(argv: list[str] | None = None) -> int:
         if not url_aceitavel(mcp_url):
             print(f"O endereco do MCP precisa ser https:// ({mcp_url}).", file=sys.stderr)
             return 1
-        print("Abrindo o navegador para voce autorizar no portal...")
         try:
-            portal_url, token = entrar(mcp_url)
+            if args.codigo:
+                portal_url, token = entrar_com_codigo(mcp_url, args.codigo)
+            else:
+                print("Abrindo o navegador para voce autorizar no portal...")
+                portal_url, token = entrar(mcp_url)
         except ErroDeLogin as erro:
             print(str(erro), file=sys.stderr)
             return 1
